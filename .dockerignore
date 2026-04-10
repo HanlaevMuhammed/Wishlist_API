@@ -1,0 +1,6 @@
+.git
+.env
+README.md
+*.md
+bin
+coverage.out

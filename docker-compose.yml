@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-wishlist}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wishlist}
+      POSTGRES_DB: ${POSTGRES_DB:-wishlist}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - wishlist_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-wishlist} -d ${POSTGRES_DB:-wishlist}"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      HTTP_ADDR: ${HTTP_ADDR:-:8080}
+      DATABASE_URL: ${DATABASE_URL:-postgres://wishlist:wishlist@postgres:5432/wishlist?sslmode=disable}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production-min-32-chars-long}
+      JWT_EXPIRATION_HOURS: ${JWT_EXPIRATION_HOURS:-168}
+      MIGRATIONS_PATH: ${MIGRATIONS_PATH:-/app/migrations}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  wishlist_pg_data:
